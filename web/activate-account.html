@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 0;
+        -webkit-text-size-adjust: 100%;
+        -ms-text-size-adjust: 100%;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #ffffff;
+      }
+      .header {
+        background-color: #4caf50;
+        color: white;
+        text-align: center;
+        padding: 20px;
+      }
+      .content {
+        padding: 20px;
+        text-align: left;
+      }
+      .content h2 {
+        color: #333333;
+      }
+      .content p {
+        font-size: 16px;
+        line-height: 1.5;
+        color: #666666;
+      }
+      .code {
+        display: block;
+        width: fit-content;
+        margin: 20px auto;
+        padding: 10px 20px;
+        background-color: #4caf50;
+        color: white;
+        text-align: center;
+        font-size: 18px;
+        letter-spacing: 2px;
+      }
+      .footer {
+        text-align: center;
+        padding: 10px;
+        background-color: #f4f4f4;
+        font-size: 12px;
+        color: #999999;
+      }
+    </style>
+  </head>
+  <body>
+    <table>
+      <tr>
+        <td class="header">
+          <h1>Activate Your Account</h1>
+        </td>
+      </tr>
+      <tr>
+        <td class="content">
+          <h2>Hello,{{ .Name}}</h2>
+          <p>
+            Thank you for signing up! Please use the following code to activate
+            your account:
+          </p>
+          <span class="code">{{ .AuthToken}}</span>
+          <p>
+            If you did not sign up for this account, please disregard this
+            email.
+          </p>
+          <p>
+            Best regards,<br />
+            Invxice
+          </p>
+        </td>
+      </tr>
+      <tr>
+        <td class="footer">&copy; 2024 Invxice. All rights reserved.</td>
+      </tr>
+    </table>
+  </body>
+</html>
