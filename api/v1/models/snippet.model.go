@@ -24,7 +24,7 @@ func (snippet *Snippet) Create() (*Snippet, error) {
 
 func GetSnippets(userId uuid.UUID) ([]Snippet, error) {
 	var snippets []Snippet
-	err := database.DB.Where("user_id = ?", userId).Find(&snippets).Error
+	err := database.DB.Preload("User").Where("user_id = ?", userId).Find(&snippets).Error
 	if err != nil {
 		return []Snippet{}, err
 	}
