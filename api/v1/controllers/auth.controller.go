@@ -1,14 +1,18 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/topboyasante/go-snip/api/v1/models"
 	"github.com/topboyasante/go-snip/internal/database"
 	"github.com/topboyasante/go-snip/internal/types"
 	"github.com/topboyasante/go-snip/pkg/auth"
+	"github.com/topboyasante/go-snip/pkg/config"
 	"github.com/topboyasante/go-snip/pkg/email"
 	"github.com/topboyasante/go-snip/pkg/validators"
 	"golang.org/x/crypto/bcrypt"
@@ -252,5 +256,164 @@ func ActivateAccount(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": "account has been activated",
+	})
+}
+
+func ForgotPassword(c *gin.Context) {
+	var user models.User
+
+	// Create a struct to hold the request body
+	var body struct {
+		Email string `json:"email"`
+	}
+
+	// Parse the request body and store it in the body struct
+	if c.Bind(&body) != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "failed to read request body",
+		})
+		return
+	}
+
+	// Validations to check for empty fields
+	if !validators.NotBlank(body.Email) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "the email field is empty",
+		})
+		return
+	}
+
+	// Validations to check for a correct email
+	if !validators.Matches(body.Email, validators.EmailRX) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid email",
+		})
+		return
+	}
+
+	// Find the user with the provided email and store the user details in the user variable
+	// Find the user with the provided email
+	user, err := models.GetUserByEmail(body.Email)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "user does not exist",
+		})
+		return
+	}
+
+	// Send an email with the auth token to the user
+	email.SendMailWithSMTP(
+		email.EmailConfig,
+		"Activate your account",
+		"web/reset-password.html",
+		struct {
+			Name      string
+			AuthToken int
+		}{Name: user.Username, AuthToken: user.AuthToken},
+		[]string{body.Email},
+	)
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": "reset code sent",
+	})
+}
+
+func ResetPassword(c *gin.Context) {
+	// Create an instance of models.User to hold the existing user data
+	var user models.User
+
+	// Create a struct to hold the request body
+	var body struct {
+		Email       string `json:"email"`
+		AuthToken   int    `json:"auth_token"`
+		NewPassword string `json:"new_password"`
+	}
+
+	// Parse the request body and store it in the body struct
+	if c.Bind(&body) != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "failed to read request body",
+		})
+		return
+	}
+
+	// Validations to check for empty fields
+	if !validators.NotBlank(body.Email) || !validators.NotZero(body.AuthToken) || !validators.NotBlank(body.NewPassword) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "some fields are empty",
+		})
+		return
+	}
+
+	// Validations to check for a correct email
+	if !validators.Matches(body.Email, validators.EmailRX) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid email",
+		})
+		return
+	}
+
+	// Check if the token is valid
+	if body.AuthToken != user.AuthToken {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "token is invalid",
+		})
+		return
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(body.NewPassword), 10)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "failed to hash password",
+		})
+		return
+	}
+
+	user.Password = string(hash)
+	database.DB.Save(&user)
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": "password has been reset",
+	})
+}
+
+func RefreshAccessToken(c *gin.Context) {
+	var body struct {
+		RefreshToken string `json:"refresh_token"`
+	}
+
+	if err := c.Bind(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to read request body"})
+		return
+	}
+
+	token, err := jwt.Parse(body.RefreshToken, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(config.ENV.JWTKey), nil
+	})
+
+	if err != nil || !token.Valid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid refresh token"})
+		return
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || float64(time.Now().Unix()) > claims["exp"].(float64) {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "expired refresh token"})
+		return
+	}
+
+	userID := claims["sub"].(string)
+	newAccessToken, newRefreshToken, err := auth.CreateJWTTokens(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate tokens"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"access_token":  newAccessToken,
+		"refresh_token": newRefreshToken,
 	})
 }
