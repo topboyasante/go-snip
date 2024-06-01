@@ -252,3 +252,56 @@ func DeleteSnippet(c *gin.Context) {
 		"successs": "snippet deleted",
 	})
 }
+
+func UpdateSnippet(c *gin.Context) {
+	var body struct {
+		Title       string `json:"title"`
+		Description string `json:"description"`
+		Code        string `json:"code"`
+	}
+
+	c.Bind(&body)
+
+	id := c.Param("id")
+
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized request"})
+		return
+	}
+
+	// Type Assertion
+	uID, ok := userID.(uuid.UUID)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized request"})
+		return
+	}
+
+	snippet, err := models.GetSnippet(uID, id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "no snippet exists with the provided queries",
+			})
+			return
+		}
+		return
+	}
+
+	if snippet.UserID != uID {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "you are not authorized to update this snippet"})
+		return
+	}
+
+	err = snippet.Update(body.Title, body.Description, body.Code)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "unable to delete snippet",
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"success": "snippet updated",
+	})
+}

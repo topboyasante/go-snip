@@ -47,3 +47,15 @@ func (snippet *Snippet) Delete() error {
 	}
 	return nil
 }
+
+func (snippet *Snippet) Update(title, description, code string) error {
+	err := database.DB.Model(&snippet).Updates(Snippet{
+		Title:       title,
+		Description: description,
+		Code:        code,
+	}).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
