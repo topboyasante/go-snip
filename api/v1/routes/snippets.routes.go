@@ -13,5 +13,6 @@ func SnippetRoutes(r *gin.RouterGroup) {
 	snippetRoutes.GET("", controllers.GetSnippets)
 	snippetRoutes.GET("/:id", controllers.GetSnippet)
 	snippetRoutes.POST("/create", controllers.CreateSnippet)
+	snippetRoutes.PUT("/:id", controllers.UpdateSnippet)
 	snippetRoutes.DELETE("/:id", controllers.DeleteSnippet)
 }

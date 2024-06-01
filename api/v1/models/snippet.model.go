@@ -24,7 +24,7 @@ func (snippet *Snippet) Create() (*Snippet, error) {
 
 func GetSnippets(userId uuid.UUID) ([]Snippet, error) {
 	var snippets []Snippet
-	err := database.DB.Where("user_id = ?", userId).Find(&snippets).Error
+	err := database.DB.Preload("User").Where("user_id = ?", userId).Find(&snippets).Error
 	if err != nil {
 		return []Snippet{}, err
 	}
@@ -33,7 +33,7 @@ func GetSnippets(userId uuid.UUID) ([]Snippet, error) {
 
 func GetSnippet(userId uuid.UUID, snippetId string) (Snippet, error) {
 	var snippet Snippet
-	err := database.DB.Where("user_id = ?", userId).Where("id = ?", snippetId).Find(&snippet).Error
+	err :=  database.DB.Preload("User").Where("user_id = ?", userId).Where("id = ?", snippetId).Find(&snippet).Error
 	if err != nil {
 		return Snippet{}, err
 	}
@@ -42,6 +42,18 @@ func GetSnippet(userId uuid.UUID, snippetId string) (Snippet, error) {
 
 func (snippet *Snippet) Delete() error {
 	err := database.DB.Where("id = ?", snippet.ID).Delete(&snippet).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (snippet *Snippet) Update(title, description, code string) error {
+	err := database.DB.Model(&snippet).Updates(Snippet{
+		Title:       title,
+		Description: description,
+		Code:        code,
+	}).Error
 	if err != nil {
 		return err
 	}
