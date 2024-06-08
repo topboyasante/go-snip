@@ -10,6 +10,6 @@ func AuthRoutes(r *gin.RouterGroup) {
 	authRoutes.POST("/sign-in/", controllers.SignIn)
 	authRoutes.POST("/sign-up/", controllers.SignUp)
 	authRoutes.POST("/activate-account", controllers.ActivateAccount)
-	authRoutes.POST("/forgot-password", func(ctx *gin.Context) {})
-	authRoutes.POST("/reset-password", func(ctx *gin.Context) {})
+	authRoutes.POST("/forgot-password", controllers.ForgotPassword)
+	authRoutes.POST("/reset-password", controllers.ResetPassword)
 }

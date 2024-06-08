@@ -1,0 +1,373 @@
+basePath: /api/v1
+definitions:
+  types.APIErrorMessage:
+    properties:
+      error:
+        type: string
+    type: object
+  types.APISuccessMessage:
+    properties:
+      data: {}
+      success:
+        type: string
+    type: object
+  types.ActivateAccountRequest:
+    properties:
+      auth_token:
+        type: integer
+      email:
+        type: string
+    type: object
+  types.ForgotPasswordRequest:
+    properties:
+      email:
+        type: string
+    type: object
+  types.NewSnippetRequest:
+    properties:
+      code:
+        type: string
+      description:
+        type: string
+      title:
+        type: string
+    type: object
+  types.UserLoginRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  types.UserSignUpRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+externalDocs:
+  description: OpenAPI
+  url: https://swagger.io/resources/open-api/
+host: localhost:4000
+info:
+  contact:
+    email: asantekwasi101@gmail.com
+    name: Nana Kwasi Asante
+    url: https://www.nkasante.com
+  description: API Documentation for Go-Snip.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Go-Snip API
+  version: "1.0"
+paths:
+  /auth/activate-account:
+    post:
+      consumes:
+      - application/json
+      description: Activate your account
+      parameters:
+      - description: credentials
+        in: body
+        name: Credentials
+        required: true
+        schema:
+          $ref: '#/definitions/types.ActivateAccountRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.APISuccessMessage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.APIErrorMessage'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.APIErrorMessage'
+      summary: Activate Account
+      tags:
+      - Authentication
+  /auth/forgot-password:
+    post:
+      consumes:
+      - application/json
+      description: Send code to your email
+      parameters:
+      - description: email
+        in: body
+        name: Email
+        required: true
+        schema:
+          $ref: '#/definitions/types.ForgotPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.APISuccessMessage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.APIErrorMessage'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.APIErrorMessage'
+      summary: Forgot Password
+      tags:
+      - Authentication
+  /auth/reset-password:
+    post:
+      consumes:
+      - application/json
+      description: Reset password with code from email
+      parameters:
+      - description: credentials
+        in: body
+        name: Credentials
+        required: true
+        schema:
+          $ref: '#/definitions/types.ActivateAccountRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.APISuccessMessage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.APIErrorMessage'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.APIErrorMessage'
+      summary: Reset Password
+      tags:
+      - Authentication
+  /auth/sign-in:
+    post:
+      consumes:
+      - application/json
+      description: Log in to your account
+      parameters:
+      - description: credentials
+        in: body
+        name: Credentials
+        required: true
+        schema:
+          $ref: '#/definitions/types.UserLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.APISuccessMessage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.APIErrorMessage'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.APIErrorMessage'
+      summary: Sign In
+      tags:
+      - Authentication
+  /auth/sign-up:
+    post:
+      consumes:
+      - application/json
+      description: Sign up to your account
+      parameters:
+      - description: credentials
+        in: body
+        name: Credentials
+        required: true
+        schema:
+          $ref: '#/definitions/types.UserSignUpRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.APISuccessMessage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.APIErrorMessage'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.APIErrorMessage'
+      summary: Sign Up
+      tags:
+      - Authentication
+  /snippets:
+    get:
+      consumes:
+      - application/json
+      description: Get all snippets
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.APISuccessMessage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.APIErrorMessage'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.APIErrorMessage'
+      summary: Get Snippets
+      tags:
+      - Snippets
+  /snippets/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete snippet
+      parameters:
+      - description: Snippet ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.APISuccessMessage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.APIErrorMessage'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.APIErrorMessage'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete snippet
+      tags:
+      - Snippets
+    get:
+      consumes:
+      - application/json
+      description: Get a snippet
+      parameters:
+      - description: Snippet ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.APISuccessMessage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.APIErrorMessage'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.APIErrorMessage'
+      summary: Get Snippet
+      tags:
+      - Snippets
+    put:
+      consumes:
+      - application/json
+      description: Update Snippet
+      parameters:
+      - description: Snippet ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: snippet
+        in: body
+        name: Snippet
+        required: true
+        schema:
+          $ref: '#/definitions/types.NewSnippetRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.APISuccessMessage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.APIErrorMessage'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.APIErrorMessage'
+      security:
+      - ApiKeyAuth: []
+      summary: Update Snippet
+      tags:
+      - Snippets
+  /snippets/create:
+    post:
+      consumes:
+      - application/json
+      description: Create a Snippet
+      parameters:
+      - description: snippet
+        in: body
+        name: Snippet
+        required: true
+        schema:
+          $ref: '#/definitions/types.NewSnippetRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.APISuccessMessage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.APIErrorMessage'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.APIErrorMessage'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a Snippet
+      tags:
+      - Snippets
+securityDefinitions:
+  JWT:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
