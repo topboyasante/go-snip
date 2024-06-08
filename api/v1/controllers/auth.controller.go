@@ -18,6 +18,18 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// SignIn godoc
+//
+//	@Summary		Sign In
+//	@Description	Log in to your account
+//	@Tags			Authentication
+//	@Accept			json
+//	@Produce		json
+//	@Param			Credentials	body		types.UserLoginRequest	true	"credentials"
+//	@Success		200			{object}	types.APISuccessMessage
+//	@Failure		400			{object}	types.APIErrorMessage
+//	@Failure		500			{object}	types.APIErrorMessage
+//	@Router			/auth/sign-in [post]
 func SignIn(c *gin.Context) {
 	// Create a struct to hold the request body
 	var body struct {
@@ -27,16 +39,16 @@ func SignIn(c *gin.Context) {
 
 	// Parse the request body and store it in the body struct
 	if c.Bind(&body) != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "failed to read request body",
+		c.JSON(http.StatusBadRequest, types.APIErrorMessage{
+			ErrorMessage: "failed to read request body",
 		})
 		return
 	}
 
 	// Validations to check for empty fields
 	if !validators.NotBlank(body.Username) || !validators.NotBlank(body.Password) {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "some fields are empty",
+		c.JSON(http.StatusBadRequest, types.APIErrorMessage{
+			ErrorMessage: "some fields are empty",
 		})
 		return
 	}
@@ -44,32 +56,32 @@ func SignIn(c *gin.Context) {
 	// Find the user with the provided email
 	user, err := models.GetUserByUsername(body.Username)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "user does not exist",
+		c.JSON(http.StatusBadRequest, types.APIErrorMessage{
+			ErrorMessage: "user does not exist",
 		})
 		return
 	}
 
 	// Return if the account has not been activated
 	if !user.IsActive {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "account is not activated",
+		c.JSON(http.StatusBadRequest, types.APIErrorMessage{
+			ErrorMessage: "account is not activated",
 		})
 		return
 	}
 
 	err = user.VerifyPassword(body.Password)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "invalid password",
+		c.JSON(http.StatusBadRequest, types.APIErrorMessage{
+			ErrorMessage: "invalid password",
 		})
 		return
 	}
 
 	access_token, refesh_token, err := auth.CreateJWTTokens(user.ID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "unable to create accessToken",
+		c.JSON(http.StatusBadRequest, types.APIErrorMessage{
+			ErrorMessage: "unable to create accessToken",
 		})
 		return
 	}
@@ -87,12 +99,24 @@ func SignIn(c *gin.Context) {
 		RefeshToken: refesh_token,
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": "logged in",
-		"user":    userRes,
+	c.JSON(http.StatusOK, types.APISuccessMessage{
+		SuccessMessage: "logged in",
+		Data:           userRes,
 	})
 }
 
+// SignUp godoc
+//
+//	@Summary		Sign Up
+//	@Description	Sign up to your account
+//	@Tags			Authentication
+//	@Accept			json
+//	@Produce		json
+//	@Param			Credentials	body		types.UserSignUpRequest	true	"credentials"
+//	@Success		200			{object}	types.APISuccessMessage
+//	@Failure		400			{object}	types.APIErrorMessage
+//	@Failure		500			{object}	types.APIErrorMessage
+//	@Router			/auth/sign-up [post]
 func SignUp(c *gin.Context) {
 	// Create a struct to hold the request body
 	var body struct {
@@ -103,43 +127,43 @@ func SignUp(c *gin.Context) {
 
 	// Parse the request body and store it in the body struct
 	if c.Bind(&body) != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "failed to read request body",
+		c.JSON(http.StatusBadRequest, types.APIErrorMessage{
+			ErrorMessage: "failed to read request body",
 		})
 		return
 	}
 
 	// Validations to check for empty fields
 	if !validators.NotBlank(body.Username) || !validators.NotBlank(body.Email) || !validators.NotBlank(body.Password) {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "some fields are empty",
+		c.JSON(http.StatusBadRequest, types.APIErrorMessage{
+			ErrorMessage: "some fields are empty",
 		})
 		return
 	}
 
 	// Validations to check for a correct email
 	if !validators.Matches(body.Email, validators.EmailRX) {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "invalid email",
+		c.JSON(http.StatusBadRequest, types.APIErrorMessage{
+			ErrorMessage: "invalid email",
 		})
 		return
 	}
 
 	//Check if a user exists with that email or username
 	if !auth.IsEmailUnique(body.Email) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "user with provided email exists"})
+		c.JSON(http.StatusBadRequest, types.APIErrorMessage{ErrorMessage: "user with provided email exists"})
 		return
 	}
 	if !auth.IsUsernameUnique(body.Username) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "user with provided username exists"})
+		c.JSON(http.StatusBadRequest, types.APIErrorMessage{ErrorMessage: "user with provided username exists"})
 		return
 	}
 
 	// Hash the password from the request body
 	hash, err := bcrypt.GenerateFromPassword([]byte(body.Password), 10)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "failed to hash password",
+		c.JSON(http.StatusBadRequest, types.APIErrorMessage{
+			ErrorMessage: "failed to hash password",
 		})
 		return
 	}
@@ -175,19 +199,31 @@ func SignUp(c *gin.Context) {
 	// Insert the user in the DB
 	newUser, err := user.Create()
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "failed to create user",
+		c.JSON(http.StatusBadRequest, types.APIErrorMessage{
+			ErrorMessage: "failed to create user",
 		})
 		return
 	}
 
 	// Return a 200 status when everything was successful
-	c.JSON(http.StatusOK, gin.H{
-		"success": "account created. please activate your account",
-		"user":    newUser,
+	c.JSON(http.StatusOK, types.APISuccessMessage{
+		SuccessMessage: "account created. please activate your account",
+		Data:           newUser,
 	})
 }
 
+// Activate Account godoc
+//
+//	@Summary		Activate Account
+//	@Description	Activate your account
+//	@Tags			Authentication
+//	@Accept			json
+//	@Produce		json
+//	@Param			Credentials	body		types.ActivateAccountRequest	true	"credentials"
+//	@Success		200			{object}	types.APISuccessMessage
+//	@Failure		400			{object}	types.APIErrorMessage
+//	@Failure		500			{object}	types.APIErrorMessage
+//	@Router			/auth/activate-account [post]
 func ActivateAccount(c *gin.Context) {
 	// Create an instance of models.User to hold the existing user data
 	var user models.User
@@ -200,24 +236,24 @@ func ActivateAccount(c *gin.Context) {
 
 	// Parse the request body and store it in the body struct
 	if c.Bind(&body) != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "failed to read request body",
+		c.JSON(http.StatusBadRequest, types.APIErrorMessage{
+			ErrorMessage: "failed to read request body",
 		})
 		return
 	}
 
 	// Validations to check for empty fields
 	if !validators.NotBlank(body.Email) || !validators.NotZero(body.AuthToken) {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "some fields are empty",
+		c.JSON(http.StatusBadRequest, types.APIErrorMessage{
+			ErrorMessage: "some fields are empty",
 		})
 		return
 	}
 
 	// Validations to check for a correct email
 	if !validators.Matches(body.Email, validators.EmailRX) {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "invalid email",
+		c.JSON(http.StatusBadRequest, types.APIErrorMessage{
+			ErrorMessage: "invalid email",
 		})
 		return
 	}
@@ -225,24 +261,24 @@ func ActivateAccount(c *gin.Context) {
 	// Find the user with the provided email and store the user details in the user variable
 	user, err := models.GetUserByEmail(body.Email)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "user does not exist",
+		c.JSON(http.StatusBadRequest, types.APIErrorMessage{
+			ErrorMessage: "user does not exist",
 		})
 		return
 	}
 
 	// Check if the token is valid
 	if body.AuthToken != user.AuthToken {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "token is invalid",
+		c.JSON(http.StatusBadRequest, types.APIErrorMessage{
+			ErrorMessage: "token is invalid",
 		})
 		return
 	}
 
 	// Return if the account has already been activated, and activate the user account if it has not
 	if user.IsActive {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "account has already been activated",
+		c.JSON(http.StatusBadRequest, types.APIErrorMessage{
+			ErrorMessage: "account has already been activated",
 		})
 		return
 	}
@@ -254,11 +290,23 @@ func ActivateAccount(c *gin.Context) {
 	user.AuthToken = auth.GenerateAuthToken()
 	database.DB.Save(&user)
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": "account has been activated",
+	c.JSON(http.StatusOK, types.APISuccessMessage{
+		SuccessMessage: "account has been activated",
 	})
 }
 
+// Forgot Password godoc
+//
+//	@Summary		Forgot Password
+//	@Description	Send code to your email
+//	@Tags			Authentication
+//	@Accept			json
+//	@Produce		json
+//	@Param			Email	body		types.ForgotPasswordRequest	true	"email"
+//	@Success		200		{object}	types.APISuccessMessage
+//	@Failure		400		{object}	types.APIErrorMessage
+//	@Failure		500		{object}	types.APIErrorMessage
+//	@Router			/auth/forgot-password [post]
 func ForgotPassword(c *gin.Context) {
 	var user models.User
 
@@ -269,24 +317,24 @@ func ForgotPassword(c *gin.Context) {
 
 	// Parse the request body and store it in the body struct
 	if c.Bind(&body) != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "failed to read request body",
+		c.JSON(http.StatusBadRequest, types.APIErrorMessage{
+			ErrorMessage: "failed to read request body",
 		})
 		return
 	}
 
 	// Validations to check for empty fields
 	if !validators.NotBlank(body.Email) {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "the email field is empty",
+		c.JSON(http.StatusBadRequest, types.APIErrorMessage{
+			ErrorMessage: "the email field is empty",
 		})
 		return
 	}
 
 	// Validations to check for a correct email
 	if !validators.Matches(body.Email, validators.EmailRX) {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "invalid email",
+		c.JSON(http.StatusBadRequest, types.APIErrorMessage{
+			ErrorMessage: "invalid email",
 		})
 		return
 	}
@@ -295,8 +343,8 @@ func ForgotPassword(c *gin.Context) {
 	// Find the user with the provided email
 	user, err := models.GetUserByEmail(body.Email)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "user does not exist",
+		c.JSON(http.StatusBadRequest, types.APIErrorMessage{
+			ErrorMessage: "user does not exist",
 		})
 		return
 	}
@@ -313,11 +361,23 @@ func ForgotPassword(c *gin.Context) {
 		[]string{body.Email},
 	)
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": "reset code sent",
+	c.JSON(http.StatusOK, types.APISuccessMessage{
+		SuccessMessage: "a code has been sent to your email",
 	})
 }
 
+// Reset Password godoc
+//
+//	@Summary		Reset Password
+//	@Description	Reset password with code from email
+//	@Tags			Authentication
+//	@Accept			json
+//	@Produce		json
+//	@Param			Credentials	body		types.ActivateAccountRequest	true	"credentials"
+//	@Success		200			{object}	types.APISuccessMessage
+//	@Failure		400			{object}	types.APIErrorMessage
+//	@Failure		500			{object}	types.APIErrorMessage
+//	@Router			/auth/reset-password [post]
 func ResetPassword(c *gin.Context) {
 	// Create an instance of models.User to hold the existing user data
 	var user models.User
@@ -331,40 +391,40 @@ func ResetPassword(c *gin.Context) {
 
 	// Parse the request body and store it in the body struct
 	if c.Bind(&body) != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "failed to read request body",
+		c.JSON(http.StatusBadRequest, types.APIErrorMessage{
+			ErrorMessage: "failed to read request body",
 		})
 		return
 	}
 
 	// Validations to check for empty fields
 	if !validators.NotBlank(body.Email) || !validators.NotZero(body.AuthToken) || !validators.NotBlank(body.NewPassword) {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "some fields are empty",
+		c.JSON(http.StatusBadRequest, types.APIErrorMessage{
+			ErrorMessage: "some fields are empty",
 		})
 		return
 	}
 
 	// Validations to check for a correct email
 	if !validators.Matches(body.Email, validators.EmailRX) {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "invalid email",
+		c.JSON(http.StatusBadRequest, types.APIErrorMessage{
+			ErrorMessage: "invalid email",
 		})
 		return
 	}
 
 	// Check if the token is valid
 	if body.AuthToken != user.AuthToken {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "token is invalid",
+		c.JSON(http.StatusBadRequest, types.APIErrorMessage{
+			ErrorMessage: "token is invalid",
 		})
 		return
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(body.NewPassword), 10)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "failed to hash password",
+		c.JSON(http.StatusBadRequest, types.APIErrorMessage{
+			ErrorMessage: "failed to hash password",
 		})
 		return
 	}
@@ -372,8 +432,8 @@ func ResetPassword(c *gin.Context) {
 	user.Password = string(hash)
 	database.DB.Save(&user)
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": "password has been reset",
+	c.JSON(http.StatusOK, types.APISuccessMessage{
+		SuccessMessage: "password has been reset",
 	})
 }
 
@@ -383,7 +443,7 @@ func RefreshAccessToken(c *gin.Context) {
 	}
 
 	if err := c.Bind(&body); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to read request body"})
+		c.JSON(http.StatusBadRequest, types.APIErrorMessage{ErrorMessage: "failed to read request body"})
 		return
 	}
 
@@ -395,20 +455,20 @@ func RefreshAccessToken(c *gin.Context) {
 	})
 
 	if err != nil || !token.Valid {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid refresh token"})
+		c.JSON(http.StatusUnauthorized, types.APIErrorMessage{ErrorMessage: "invalid refresh token"})
 		return
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok || float64(time.Now().Unix()) > claims["exp"].(float64) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "expired refresh token"})
+		c.JSON(http.StatusUnauthorized, types.APIErrorMessage{ErrorMessage: "expired refresh token"})
 		return
 	}
 
 	userID := claims["sub"].(string)
 	newAccessToken, newRefreshToken, err := auth.CreateJWTTokens(userID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate tokens"})
+		c.JSON(http.StatusInternalServerError, types.APIErrorMessage{ErrorMessage: "Failed to generate tokens"})
 		return
 	}
 

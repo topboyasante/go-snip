@@ -6,6 +6,11 @@ import (
 	"github.com/google/uuid"
 )
 
+type NewSnippetRequest struct {
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Code        string `json:"code"`
+}
 type NewSnippetResponse struct {
 	ID          uuid.UUID `json:"id"`
 	Title       string    `json:"title"`

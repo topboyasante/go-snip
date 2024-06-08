@@ -8,10 +8,12 @@ import (
 
 func SnippetRoutes(r *gin.RouterGroup) {
 	snippetRoutes := r.Group("/snippets")
-	snippetRoutes.Use(middleware.RequireAuth)
 	
 	snippetRoutes.GET("", controllers.GetSnippets)
 	snippetRoutes.GET("/:id", controllers.GetSnippet)
+	
+	snippetRoutes.Use(middleware.RequireAuth)
+	
 	snippetRoutes.POST("/create", controllers.CreateSnippet)
 	snippetRoutes.PUT("/:id", controllers.UpdateSnippet)
 	snippetRoutes.DELETE("/:id", controllers.DeleteSnippet)
