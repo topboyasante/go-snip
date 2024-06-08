@@ -72,7 +72,7 @@ func GetSnippet(c *gin.Context) {
 //	@Tags			Snippets
 //	@Accept			json
 //	@Produce		json
-//	@Security		ApiKeyAuth
+//	@Security		JWT
 //	@Param			Snippet	body		types.NewSnippetRequest	true	"snippet"
 //	@Success		200		{object}	types.APISuccessMessage
 //	@Failure		400		{object}	types.APIErrorMessage
@@ -172,7 +172,7 @@ func CreateSnippet(c *gin.Context) {
 //	@Tags			Snippets
 //	@Accept			json
 //	@Produce		json
-//	@Security		ApiKeyAuth
+//	@Security		JWT
 //	@Param			id	path		string	true	"Snippet ID"
 //	@Success		200		{object}	types.APISuccessMessage
 //	@Failure		400		{object}	types.APIErrorMessage
@@ -248,7 +248,7 @@ func DeleteSnippet(c *gin.Context) {
 //	@Tags			Snippets
 //	@Accept			json
 //	@Produce		json
-//	@Security		ApiKeyAuth
+//	@Security		JWT
 //	@Param			id	path		string	true	"Snippet ID"
 //	@Param			Snippet	body		types.NewSnippetRequest	true	"snippet"
 //	@Success		200		{object}	types.APISuccessMessage

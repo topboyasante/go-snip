@@ -265,7 +265,7 @@ paths:
           schema:
             $ref: '#/definitions/types.APIErrorMessage'
       security:
-      - ApiKeyAuth: []
+      - JWT: []
       summary: Delete snippet
       tags:
       - Snippets
@@ -329,7 +329,7 @@ paths:
           schema:
             $ref: '#/definitions/types.APIErrorMessage'
       security:
-      - ApiKeyAuth: []
+      - JWT: []
       summary: Update Snippet
       tags:
       - Snippets
@@ -361,7 +361,7 @@ paths:
           schema:
             $ref: '#/definitions/types.APIErrorMessage'
       security:
-      - ApiKeyAuth: []
+      - JWT: []
       summary: Create a Snippet
       tags:
       - Snippets
